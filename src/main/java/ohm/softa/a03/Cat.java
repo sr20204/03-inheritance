@@ -1,18 +1,20 @@
 package ohm.softa.a03;
 
+import ohm.softa.a03.State;
+import ohm.softa.a03.HungryState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static ohm.softa.a03.Cat.State.*;
+//import static ohm.softa.a03.Cat.State.*;
 
 public class Cat {
-	private static final Logger logger = LogManager.getLogger();
+	//private static final Logger logger = LogManager.getLogger();
 
 	// valid states
-	public enum State {SLEEPING, HUNGRY, DIGESTING, PLAYFUL, DEAD}
+	public enum StateS {SLEEPING, HUNGRY, DIGESTING, PLAYFUL, DEAD}
 
 	// initially, animals are sleeping
-	private State state = State.SLEEPING;
+	private State currentState = new SleepingState();
 
 	// state durations (set via constructor), ie. the number of ticks in each state
 	private final int sleep;
@@ -21,8 +23,6 @@ public class Cat {
 
 	private final String name;
 
-	private int time = 0;
-	private int timeDigesting = 0;
 
 	public Cat(String name, int sleep, int awake, int digest) {
 		this.name = name;
@@ -32,10 +32,9 @@ public class Cat {
 	}
 
 	public void tick(){
-		logger.info("tick()");
-		time = time + 1;
+	currentState = currentState.tick(this);
 
-		switch (state) {
+		/*switch (state) {
 			case SLEEPING:
 				if (time == sleep) {
 					logger.info("Yoan... getting hungry!");
@@ -69,8 +68,8 @@ public class Cat {
 			default:
 				throw new IllegalStateException("Unknown cat state " + state.name());
 		}
-
-		logger.info(state.name());
+*/
+		//logger.info(currentState.name());
 
 	}
 
@@ -80,32 +79,38 @@ public class Cat {
 	public void feed(){
 		if (!isHungry())
 			throw new IllegalStateException("Can't stuff a cat...");
-
-		logger.info("You feed the cat...");
+		HungryState hung = new HungryState();
+		currentState = hung.feed(this);
+		getCurrentState().logger.info("You feed the cat...");
+		/*currentState = (HungryState) currentState;
+		currentState.feed();*/
+	 	//currentState = currentState.feed(this);
+		//logger.info("You feed the cat...");
 
 		// change state and reset the timer
-		state = State.DIGESTING;
-		timeDigesting = 0;
+		//currentState = new DigestingState();
+		//timeDigesting = 0;
 	}
 
 	public boolean isAsleep() {
-		return state.equals(State.SLEEPING);
+		SleepingState s = new SleepingState();
+		return currentState.getClass() == s.getClass();
 	}
 
 	public boolean isPlayful() {
-		return state.equals(State.PLAYFUL);
+		return currentState.getClass() == new PlayfulState().getClass();
 	}
 
 	public boolean isHungry() {
-		return state.equals(State.HUNGRY);
+		return currentState.getClass() == new HungryState().getClass();
 	}
 
 	public boolean isDigesting() {
-		return state.equals(State.DIGESTING);
+		return currentState.getClass() == new DigestingState().getClass();
 	}
 
 	public boolean isDead() {
-		return state == State.DEAD;
+		return currentState.getClass() == new DeathState().getClass(); //currentState == StateS.DEAD;
 	}
 
 	@Override
@@ -113,4 +118,19 @@ public class Cat {
 		return name;
 	}
 
+	public int getSleep() {
+		return sleep;
+	}
+	public int getAwake() {
+		return awake;
+	}
+
+
+	public int getDigest() {
+		return digest;
+	}
+
+	public State getCurrentState() {
+		return currentState;
+	}
 }
